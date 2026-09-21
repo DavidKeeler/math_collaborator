@@ -1,0 +1,39 @@
+{
+  "_comment": "Template for the orchestrator agent. Placeholders: {{NICKNAME}} = project prefix, {{DESCRIPTION}} = one-line description, {{PROMPT}} = full inlined orchestrator prompt text, {{WORKER_NAMES}} = list of worker agent names for crew settings (always includes '{{NICKNAME}}-critic'), {{SHARED_RESOURCE_GLOB}} = 'file://shared/*.md'. Filled programmatically by generate_bundle.py — do not hand-edit fields other than by editing generate_bundle.py.",
+  "name": "{{NICKNAME}}",
+  "description": "{{DESCRIPTION}}",
+  "prompt": "{{PROMPT}}",
+  "tools": [
+    "read",
+    "grep",
+    "glob",
+    "code",
+    "write",
+    "shell",
+    "subagent",
+    "todo_list"
+  ],
+  "allowedTools": [
+    "read",
+    "grep",
+    "glob",
+    "code",
+    "todo_list"
+  ],
+  "toolsSettings": {
+    "write": {
+      "allowedPaths": ["shared/**"],
+      "deniedPaths": ["{{WORKER_TASK_DIRS_DENYLIST}}"]
+    },
+    "shell": {
+      "autoAllowReadonly": true,
+      "allowedCommands": ["^mkdir\\s+-p\\s+.*$"]
+    },
+    "crew": {
+      "availableAgents": "{{WORKER_NAMES}}",
+      "trustedAgents": "{{WORKER_NAMES}}"
+    }
+  },
+  "resources": ["{{SHARED_RESOURCE_GLOB}}"],
+  "welcomeMessage": "What are we working on?"
+}

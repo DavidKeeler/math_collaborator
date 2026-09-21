@@ -1,0 +1,15 @@
+{
+  "_comment": "Template for the critic agent. Always included in every generated bundle. Read-only across the whole project except its own review-notes area. Placeholders: {{AGENT_NAME}} = '{{NICKNAME}}-critic', {{DESCRIPTION}}, {{PROMPT}} (must encode the chosen checkpoint tier: Full/Reduced/Minimal, and the N=4 periodic-decision rule if Full). Filled programmatically by generate_bundle.py.",
+  "name": "{{AGENT_NAME}}",
+  "description": "{{DESCRIPTION}}",
+  "prompt": "{{PROMPT}}",
+  "tools": ["read", "grep", "glob", "code", "write"],
+  "allowedTools": ["read", "grep", "glob", "code"],
+  "toolsSettings": {
+    "write": {
+      "allowedPaths": ["shared/critic_notes.md"],
+      "deniedPaths": ["{{WORKER_TASK_DIRS_DENYLIST}}"]
+    }
+  },
+  "resources": ["file://shared/*.md"]
+}

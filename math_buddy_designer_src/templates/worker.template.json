@@ -1,0 +1,18 @@
+{
+  "_comment": "Template for a fixed-core or conditional worker agent (proof-writer, researcher, formalizer, numerics/sim, visualization). Placeholders: {{AGENT_NAME}}, {{DESCRIPTION}}, {{PROMPT}}, {{OWN_TASK_DIR}} = e.g. 'proof/**', {{EXTRA_TOOLS}} = list appended to tools (e.g. ['web_search','web_fetch'] for researcher only, or ['shell'] for formalizer/numerics), {{SHELL_ALLOWED_COMMANDS}} = regex list or omitted if no shell. Filled programmatically by generate_bundle.py.",
+  "name": "{{AGENT_NAME}}",
+  "description": "{{DESCRIPTION}}",
+  "prompt": "{{PROMPT}}",
+  "tools": ["read", "grep", "glob", "code", "write", "{{EXTRA_TOOLS}}"],
+  "allowedTools": ["read", "grep", "glob", "code"],
+  "toolsSettings": {
+    "write": {
+      "allowedPaths": ["{{OWN_TASK_DIR}}", "shared/**"]
+    },
+    "shell": {
+      "autoAllowReadonly": true,
+      "allowedCommands": "{{SHELL_ALLOWED_COMMANDS}}"
+    }
+  },
+  "resources": ["file://shared/*.md"]
+}
