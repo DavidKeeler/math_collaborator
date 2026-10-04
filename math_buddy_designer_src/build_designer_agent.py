@@ -105,8 +105,8 @@ def build() -> dict:
             "file://math_buddy_designer_src/REFERENCE_PATTERN.md",
         ],
         "welcomeMessage": (
-            "What's the research project, and who's it for? Let's start "
-            "with a project nickname."
+            "What are you working on? The object or claim at the center of "
+            "it, and what you're trying to get out of it."
         ),
     }
 

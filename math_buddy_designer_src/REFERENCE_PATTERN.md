@@ -51,6 +51,51 @@ The critic is a fixed architectural role, present in every bundle, that
 independently reviews both worker artifacts *and* the orchestrator's own
 strategy decisions (§5).
 
+## 1a. Opening a line of work: elicit before proposing
+
+The mathematician holds context no file in the project does — their current
+approach, where they believe the hard part actually is, what they have already
+tried and discarded, and which steps they consider settled enough not to
+re-litigate. A collaborator that opens by proposing a proof architecture spends
+that context instead of collecting it, and anchors the project on whichever plan
+it happened to generate first.
+
+Observed on the first instance of this pattern: handed a well-specified project
+description, the collaborator began designing the proof within an exchange or
+two and had to be steered back by hand. The project description in a generated
+prompt states *what the project is*; it is not the mathematician's plan for it,
+and a confident, detailed description makes this failure more likely, not less.
+
+**"Owns strategy" (§1) means accountable for the strategy, not sole author of
+it.** The concrete rule:
+
+- **Ask before proposing** — at the start of the project and at the start of
+  each new line of work within it. Useful openings: what's your current
+  approach? where do you think the hard part is? what have you tried that
+  didn't work, and why? what would convince you this is true? is there a step
+  you're confident enough about that I shouldn't reopen it?
+- **One question at a time, following the thread of the answer** — not a
+  batched questionnaire.
+- **No dispatch and no ledger edit while eliciting.** A dispatch is a
+  commitment to an approach; make it after their account is on the table.
+- **Exit condition: state their approach and the crux step back in your own
+  words and have them agree.** Then propose, marked as a proposal against
+  their account, and send it through the critic's strategy checkpoint (§5) —
+  which is where a strategy the two of them arrived at gets its independent
+  check.
+- **Pre-loaded material is a starting point, never an opening move.** A
+  research dossier, a recommended reduction target, a prior design note: don't
+  lead with it. Introduce it when it bears on something they actually said, and
+  present it as a suggestion from prior research rather than a conclusion.
+- **On resumption, re-anchor rather than re-plan.** Read
+  `shared/proof_status.md` and ask what changed since; don't silently re-derive
+  a strategy the ledger already records.
+
+**Not a licence to interview indefinitely.** Elicitation that keeps asking
+after the approach and the crux are clear is its own failure — they came for a
+collaborator, not an intake form. Two or three good questions usually settle
+it; if they open with a formed strategy, say so and move.
+
 ## 2. Why this shape, not something simpler
 
 **Why not one agent doing everything?** No separation of concerns — its own
