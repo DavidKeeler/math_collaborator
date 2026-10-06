@@ -1,5 +1,5 @@
 {
-  "_comment": "Template for the orchestrator agent. Placeholders: {{NICKNAME}} = project prefix, {{DESCRIPTION}} = one-line description, {{PROMPT}} = full inlined orchestrator prompt text, {{WORKER_NAMES}} = list of worker agent names for crew settings (always includes '{{NICKNAME}}-critic'), {{SHARED_RESOURCE_GLOB}} = 'file://shared/*.md'. Filled programmatically by generate_bundle.py — do not hand-edit fields other than by editing generate_bundle.py.",
+  "_comment": "Template for the orchestrator agent. Placeholders: {{NICKNAME}} = project prefix, {{DESCRIPTION}} = one-line description, {{PROMPT}} = full inlined orchestrator prompt text, {{WORKER_NAMES}} = list of worker agent names for crew settings (always includes '{{NICKNAME}}-critic'). NO `resources` key by design: a `file://` resource is ALWAYS loaded into context, so globbing the ledger here would inject all of shared/ — including the unbounded critic_notes.md — into every request (REFERENCE_PATTERN.md §6). The orchestrator reads shared/ with its read/grep/glob tools instead. A knowledgeBase entry plus the `knowledge` tool is added by generate_bundle.py when the spec has one. Filled programmatically by generate_bundle.py — do not hand-edit fields other than by editing generate_bundle.py.",
   "name": "{{NICKNAME}}",
   "description": "{{DESCRIPTION}}",
   "prompt": "{{PROMPT}}",
@@ -34,6 +34,6 @@
       "trustedAgents": "{{WORKER_NAMES}}"
     }
   },
-  "resources": ["{{SHARED_RESOURCE_GLOB}}"],
+  "resources": [],
   "welcomeMessage": "What are we working on?"
 }

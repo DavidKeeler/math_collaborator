@@ -232,9 +232,12 @@ work.
    `verified_claims.md`, `integrity_checklist.md`, `glossary.md`,
    `sources.md`, plus formalizer status vocabulary if included.
 4. **Wire the knowledge base resource** (§6a): the Phase 1 path, added as a
-   `knowledgeBase` entry to the orchestrator's, critic's, and researcher's
-   configs only — built-in indexing, no custom chunking or staleness
-   tracking.
+   `knowledgeBase` entry — *with the `knowledge` tool alongside it, or the
+   knowledge base is indexed and unreadable* — to the orchestrator's,
+   critic's, and researcher's configs only; built-in indexing, no custom
+   chunking or staleness tracking. No agent gets a `file://shared/*.md`
+   resource: `file://` is always loaded into context and the ledger grows
+   without bound, so the ledger is read on demand (§6).
 5. **Summarize the design** — roster, checklist highlights, critic tier — and
    move directly to implementation. Don't wait for approval here; generate
    the bundle, let the mathematician react to the concrete result.

@@ -123,6 +123,25 @@ def kb_resource(path: str) -> dict:
     return {"type": "knowledgeBase", "source": p, "autoUpdate": True}
 
 
+# A knowledgeBase resource is indexed into a separate store and queried with
+# the `knowledge` tool — it is NOT loaded into context. An agent given the
+# resource but not the tool therefore has a knowledge base it cannot read:
+# indexing happens, `kiro-cli agent validate` passes, and every search silently
+# fails. Verified live against a real bundle, where the orchestrator reported no
+# knowledge tool and its 32 KB research dossier had been unreachable since
+# generation. Resource and tool are attached together here so they cannot drift
+# apart (REFERENCE_PATTERN.md §6a).
+def attach_kb(cfg: dict, path: str | None) -> None:
+    if not path:
+        return
+    cfg["resources"] = list(cfg.get("resources", [])) + [kb_resource(path)]
+    if "knowledge" not in cfg["tools"]:
+        cfg["tools"] = list(cfg["tools"]) + ["knowledge"]
+    allowed = cfg.setdefault("allowedTools", [])
+    if "knowledge" not in allowed:
+        allowed.append("knowledge")
+
+
 def spec_entries(spec: dict) -> list[dict]:
     """Every agent entry in the spec, orchestrator and critic included."""
     return [spec["orchestrator"], *spec["workers"], spec["critic"]]
@@ -217,15 +236,17 @@ def build_orchestrator(spec: dict, worker_agent_names: list[str], critic_name: s
             denylist.append(d)
     cfg["toolsSettings"]["write"]["deniedPaths"] = sorted(set(denylist))
 
-    # The template carries a {{SHARED_RESOURCE_GLOB}} placeholder here; fill it
-    # rather than leaving it to be appended around. An unfilled placeholder is
-    # rejected outright by `kiro-cli agent validate` (resources must be a
-    # file://, skill://, or a tagged knowledgeBase object).
-    cfg["resources"] = ["file://shared/*.md"]
+    # No `file://shared/*.md` resource, deliberately. A `file://` resource is
+    # ALWAYS loaded into context (unlike `skill://`, which loads on demand), so
+    # globbing the ledger here injects every file in shared/ into every request
+    # — including critic_notes.md, which the critic appends to each cycle and
+    # which therefore grows without bound. Observed in a real bundle: 177 KB of
+    # shared/ auto-loaded, 123 KB of it critic notes, ~44k tokens before the
+    # mathematician typed anything. The ledger is read on demand with
+    # read/grep/glob instead (REFERENCE_PATTERN.md §6).
+    cfg["resources"] = []
 
-    kb = spec.get("knowledge_base")
-    if kb:
-        cfg["resources"] = list(cfg["resources"]) + [kb_resource(kb)]
+    attach_kb(cfg, spec.get("knowledge_base"))
 
     return cfg
 
@@ -279,8 +300,8 @@ def build_worker(
     else:
         cfg["toolsSettings"].pop("shell", None)
 
-    if knowledge_base and worker_spec["name"] in KB_ROLES:
-        cfg["resources"] = list(cfg.get("resources", [])) + [kb_resource(knowledge_base)]
+    if worker_spec["name"] in KB_ROLES:
+        attach_kb(cfg, knowledge_base)
 
     return cfg
 
@@ -293,8 +314,7 @@ def build_critic(nickname: str, critic_spec: dict, worker_specs: list[dict],
     cfg["prompt"] = load_prompt(critic_spec["prompt_file"])
     denylist = sorted({w["own_task_dir"] for w in worker_specs if w.get("own_task_dir")})
     cfg["toolsSettings"]["write"]["deniedPaths"] = denylist
-    if knowledge_base:
-        cfg["resources"] = list(cfg["resources"]) + [kb_resource(knowledge_base)]
+    attach_kb(cfg, knowledge_base)
     return cfg
 
 
@@ -310,6 +330,13 @@ def build(spec: dict) -> dict[str, dict]:
         agent_name = f"{nickname}-{w['name']}"
         configs[agent_name] = build_worker(nickname, w, kb, spec=spec)
     configs[critic_name] = build_critic(nickname, spec["critic"], spec["workers"], kb)
+
+    # An empty `resources` array is the normal case now that the ledger is read
+    # on demand; drop the key rather than emitting `"resources": []`.
+    for cfg in configs.values():
+        if not cfg.get("resources"):
+            cfg.pop("resources", None)
+
     return configs
 
 
@@ -330,6 +357,12 @@ INVARIANTS = [
     "The critic is read-only except its own review-notes file, and is never absent.",
     "The knowledge base goes to the orchestrator, critic, and researcher only, as a tagged "
     "`knowledgeBase` resource whose `source` is a `file://` URI.",
+    "Every agent holding a `knowledgeBase` resource also has the `knowledge` tool — the "
+    "resource is queried by that tool, not loaded into context, so without it the knowledge "
+    "base is indexed but unreadable.",
+    "No agent carries a `file://` resource pointing into `shared/`. A `file://` resource is "
+    "always loaded into context, and the ledger contains an append-only critic notes file that "
+    "grows without bound; the ledger is read on demand instead.",
     "Only the agent-editor may write under `~/.kiro/agents/`, scoped to this bundle's own "
     "configs and prompt sources — never the whole agents directory.",
     "The agent-editor's own config and own prompt source are both denied, as `~/`-prefixed or "
@@ -380,6 +413,34 @@ def verify(spec: dict, configs: dict[str, dict], allow_overwrite: bool = False) 
                 {"{{" + tok.split("}}")[0] + "}}" for tok in blob.split("{{")[1:]}
             )
             problems.append(f"{name}: unfilled template placeholder(s): {leftovers}")
+
+        # A `file://` resource is always loaded into context. Pointing one at
+        # the ledger injects the whole of shared/ into every request, and
+        # critic_notes.md there is append-only, so the cost grows every cycle
+        # until requests start failing. Read the ledger on demand instead.
+        eager_shared = [
+            r
+            for r in cfg.get("resources", [])
+            if isinstance(r, str) and "shared/" in r
+        ]
+        if eager_shared:
+            problems.append(
+                f"{name}: must not load the ledger as a `file://` resource {eager_shared} "
+                "— it is always loaded into context and shared/critic_notes.md grows without "
+                "bound; read shared/ on demand instead"
+            )
+
+        # A knowledgeBase is queried with the `knowledge` tool, not loaded into
+        # context. Resource without tool = indexed but unreadable, and nothing
+        # else in the bundle would notice.
+        if any(
+            isinstance(r, dict) and r.get("type") == "knowledgeBase"
+            for r in cfg.get("resources", [])
+        ) and "knowledge" not in cfg.get("tools", []):
+            problems.append(
+                f"{name}: has a knowledgeBase resource but no `knowledge` tool "
+                "— the knowledge base would be indexed and unreadable"
+            )
 
     existing = {p.stem for p in AGENTS_DIR.glob("*.json")}
     collisions = set(configs) & existing

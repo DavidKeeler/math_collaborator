@@ -1,5 +1,5 @@
 {
-  "_comment": "Template for a fixed-core or conditional worker agent (proof-writer, researcher, formalizer, numerics/sim, visualization). Placeholders: {{AGENT_NAME}}, {{DESCRIPTION}}, {{PROMPT}}, {{OWN_TASK_DIR}} = e.g. 'proof/**', {{EXTRA_TOOLS}} = list appended to tools (e.g. ['web_search','web_fetch'] for researcher only, or ['shell'] for formalizer/numerics), {{SHELL_ALLOWED_COMMANDS}} = regex list or omitted if no shell. Filled programmatically by generate_bundle.py.",
+  "_comment": "Template for a fixed-core or conditional worker agent (proof-writer, researcher, formalizer, numerics/sim, visualization). Placeholders: {{AGENT_NAME}}, {{DESCRIPTION}}, {{PROMPT}}, {{OWN_TASK_DIR}} = e.g. 'proof/**', {{EXTRA_TOOLS}} = list appended to tools (e.g. ['web_search','web_fetch'] for researcher only, or ['shell'] for formalizer/numerics), {{SHELL_ALLOWED_COMMANDS}} = regex list or omitted if no shell. NO `resources` key by design: a `file://` resource is ALWAYS loaded into context, so globbing the ledger here would inject all of shared/ — including the unbounded critic_notes.md — into every request (REFERENCE_PATTERN.md §6). The worker reads shared/ with its read/grep/glob tools instead. Filled programmatically by generate_bundle.py.",
   "name": "{{AGENT_NAME}}",
   "description": "{{DESCRIPTION}}",
   "prompt": "{{PROMPT}}",
@@ -13,6 +13,5 @@
       "autoAllowReadonly": true,
       "allowedCommands": "{{SHELL_ALLOWED_COMMANDS}}"
     }
-  },
-  "resources": ["file://shared/*.md"]
+  }
 }

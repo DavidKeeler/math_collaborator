@@ -449,6 +449,35 @@ context between dispatches. Anything that must persist across a cycle, or
 pass from one worker to another, lives in a file — brief workers completely
 every time from `shared/`, never assuming they remember a prior session.
 
+**The ledger is read on demand, never auto-loaded. No agent gets a
+`file://shared/*.md` resource.** A `file://` resource is *always* loaded into
+context (unlike `skill://`, which loads on demand), so a glob over `shared/`
+injects the whole ledger into every request the agent makes. That is fatal
+here for a structural reason, not a tuning one: `critic_notes.md` is
+append-only, so the per-request cost grows every review cycle and never comes
+back down.
+
+Observed in a real bundle: 177 KB of `shared/` auto-loaded into all eight
+agents, 123 KB of it critic notes — roughly 44k tokens consumed before the
+mathematician typed anything, ending in requests the API rejected outright.
+The agents already have `read`/`grep`/`glob` and a prompt instruction to brief
+themselves from `shared/`; that is access, and access is all they need. The
+critic is the worst case, since auto-loading would feed it its own accumulated
+output on every request.
+
+Two consequences worth keeping in mind:
+
+- **Rotate the notes file anyway.** Even read on demand, an indefinitely
+  growing `critic_notes.md` is awkward to work with. Archive older notes into
+  a subdirectory (`shared/archive/`) periodically — a single-level `shared/*.md`
+  pattern does not match a subdirectory, which also keeps the archive out of
+  any future glob.
+- **Default resource inheritance still applies.** Custom agents inherit
+  steering files, skills, and project marker files like `README.md` and
+  `AGENTS.md` on top of whatever `resources` declares. If a project's marker
+  files are large, that inheritance is the next thing to look at; it is turned
+  off with `chat.disableInheritingDefaultResources`.
+
 ## 6a. The knowledge base (external, human-and-agent shared)
 
 Distinct from `shared/` and `sources.md`. A directory the mathematician
@@ -465,6 +494,16 @@ more elaborate if the material genuinely needs preprocessing the built-in
 indexer can't do (e.g. it indexes unsupported types like PDFs without text
 extraction — flag this to the mathematician if their material is PDF-heavy,
 don't work around it by default).
+
+**A knowledgeBase resource is useless without the `knowledge` tool.** The
+resource causes the directory to be indexed into a separate store; it is
+*queried* with the `knowledge` tool and never loaded into context. An agent
+granted the resource but not the tool has a knowledge base it cannot read —
+and nothing reports the problem: indexing runs, `kiro-cli agent validate`
+passes, and searches just never happen. Found exactly this way in a real
+bundle, where a 32 KB research dossier had been indexed and unreachable by all
+three authorized agents since generation. Grant the resource and the tool
+together, and check them together.
 
 **Access: orchestrator, critic, researcher — not the whole roster.**
 Orchestrator needs it for strategy context; critic needs it to check claims

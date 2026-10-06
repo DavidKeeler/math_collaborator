@@ -1,5 +1,5 @@
 {
-  "_comment": "Template for the critic agent. Always included in every generated bundle. Read-only across the whole project except its own review-notes area. Placeholders: {{AGENT_NAME}} = '{{NICKNAME}}-critic', {{DESCRIPTION}}, {{PROMPT}} (must encode the chosen checkpoint tier: Full/Reduced/Minimal, and the N=4 periodic-decision rule if Full). Filled programmatically by generate_bundle.py.",
+  "_comment": "Template for the critic agent. Always included in every generated bundle. Read-only across the whole project except its own review-notes area. Placeholders: {{AGENT_NAME}} = '{{NICKNAME}}-critic', {{DESCRIPTION}}, {{PROMPT}} (must encode the chosen checkpoint tier: Full/Reduced/Minimal, and the N=4 periodic-decision rule if Full). NO `resources` key by design — see worker.template.json; the critic is the agent that WRITES critic_notes.md, so auto-loading shared/*.md would feed it its own unbounded output every request (REFERENCE_PATTERN.md §6). A knowledgeBase entry plus the `knowledge` tool is added by generate_bundle.py when the spec has one. Filled programmatically by generate_bundle.py.",
   "name": "{{AGENT_NAME}}",
   "description": "{{DESCRIPTION}}",
   "prompt": "{{PROMPT}}",
@@ -10,6 +10,5 @@
       "allowedPaths": ["shared/critic_notes.md"],
       "deniedPaths": ["{{WORKER_TASK_DIRS_DENYLIST}}"]
     }
-  },
-  "resources": ["file://shared/*.md"]
+  }
 }
