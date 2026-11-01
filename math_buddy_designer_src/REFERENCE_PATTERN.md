@@ -442,7 +442,16 @@ outlives any worker's ephemeral session:
 - `glossary.md` — notation and terminology, one source of truth so a symbol
   means the same thing in the proof, the formalization, and the code
 - `sources.md` — vetted references, written by the researcher, confirmed by
-  the orchestrator
+  the orchestrator. Each entry: **title, authors, venue, year, DOI/arXiv ID,
+  URL, support quote, notes.** URL is the resolvable link used for the
+  existence check (§7b) — carried verbatim into the entry, not left
+  implicit, so a student who needs the source text later has a working
+  retrieval path instead of having to redo the search. Notes is freeform:
+  why the source is relevant to the project, any caveat surfaced during
+  verification (e.g. an inconclusive existence result later resolved
+  manually), or where in the source the support quote was found. Note that
+  neither field is the document itself — see §7a on what is and isn't
+  cached.
 
 **Why files, not agent memory:** workers are ephemeral and don't retain
 context between dispatches. Anything that must persist across a cycle, or
@@ -580,7 +589,9 @@ only if all three succeed:
    inconclusive unless the 3-search cap was used thoroughly.
 2. **Metadata match** — title, authors, venue, year confirmed against the
    resolved record. A real DOI resolving to a *different* paper is documented,
-   not hypothetical.
+   not hypothetical. Carry the resolvable URL used for this check verbatim
+   into the `sources.md` entry (§6) — not paraphrased, not omitted — so the
+   retrieval path is reusable later without re-running the search.
 3. **Support** — does the source actually say what it's cited for? A real,
    correctly-identified, unretracted paper can still be miscited; confirm by
    reading content, not just matching metadata. Passing existence and metadata
